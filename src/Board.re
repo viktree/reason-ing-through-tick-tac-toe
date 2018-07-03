@@ -20,7 +20,7 @@ let make = (~state: GameTypes.state, ~onMark, ~onRestart, _children) => {
                gameState=state.gameState
                row
                onMark
-               index
+               rowIndex=index
              />
            )
         |> Array.of_list

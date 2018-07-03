@@ -96,10 +96,10 @@ let checkGameState3x3 = checkGameState(winningCombs);
 
 let updateBoard = (board: board, gameState: gameState, id) =>
   board
-  |> List.mapi((ind: int, row: row) =>
+  |> List.mapi((rowIndex: int, row: row) =>
        row
-       |> List.mapi((index: int, value: field) =>
-            string_of_int(ind) ++ string_of_int(index) === id ?
+       |> List.mapi((colIndex: int, value: field) =>
+            string_of_int(rowIndex) ++ string_of_int(colIndex) === id ?
               switch (gameState, value) {
               | (_, Marked(_)) => value
               | (Playing(player), Empty) => Marked(player)
@@ -108,12 +108,3 @@ let updateBoard = (board: board, gameState: gameState, id) =>
               value
           )
      );
-
-let initialState = () => {
-  board: [
-    [Empty, Empty, Empty],
-    [Empty, Empty, Empty],
-    [Empty, Empty, Empty],
-  ],
-  gameState: Playing(Cross),
-};
