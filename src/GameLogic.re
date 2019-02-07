@@ -10,16 +10,6 @@ type winner =
   | NoOne;
 
 type winningRows = list(list(int));
-let winningCombs = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-];
 
 let initialState = () : GameTypes.state => {
   board: [
@@ -30,81 +20,151 @@ let initialState = () : GameTypes.state => {
   gameState: Playing(Cross),
 };
 
-let gameEnded = board =>
-  List.for_all(
-    field => field == Marked(Circle) || field == Marked(Cross),
-    board,
-  );
+let getWinner = board =>
+  switch (board) {
+  | [
+      [Marked(Cross), Marked(Cross), Marked(Cross)],
+      [_, _, _],
+      [_, _, _],
+    ] =>
+    Cross
+  | [
+      [_, _, _],
+      [Marked(Cross), Marked(Cross), Marked(Cross)],
+      [_, _, _],
+    ] =>
+    Cross
+  | [
+      [_, _, _],
+      [_, _, _],
+      [Marked(Cross), Marked(Cross), Marked(Cross)],
+    ] =>
+    Cross
+  | [
+      [_, Marked(Cross), _],
+      [_, Marked(Cross), _],
+      [_, Marked(Cross), _],
+    ] =>
+    Cross
+  | [
+      [Marked(Cross), _, _],
+      [Marked(Cross), _, _],
+      [Marked(Cross), _, _],
+    ] =>
+    Cross
+  | [
+      [_, _, Marked(Cross)],
+      [_, _, Marked(Cross)],
+      [_, _, Marked(Cross)],
+    ] =>
+    Cross
+  | [
+      [Marked(Cross), _, _],
+      [_, Marked(Cross), _],
+      [_, _, Marked(Cross)],
+    ] =>
+    Cross
+  | [
+      [_, _, Marked(Cross)],
+      [_, Marked(Cross), _],
+      [Marked(Cross), _, _],
+    ] =>
+    Cross
+  /* TODO: We have to check the same cases for the board below as we checked with the board above.
+   * Is there a more idomatic way to do this?
+   * */
+  | [
+      [Marked(Circle), Marked(Circle), Marked(Circle)],
+      [_, _, _],
+      [_, _, _],
+    ] =>
+    Circle
+  | [
+      [_, _, _],
+      [Marked(Circle), Marked(Circle), Marked(Circle)],
+      [_, _, _],
+    ] =>
+    Circle
+  | [
+      [_, _, _],
+      [_, _, _],
+      [Marked(Circle), Marked(Circle), Marked(Circle)],
+    ] =>
+    Circle
+  | [
+      [_, Marked(Circle), _],
+      [_, Marked(Circle), _],
+      [_, Marked(Circle), _],
+    ] =>
+    Circle
+  | [
+      [Marked(Circle), _, _],
+      [Marked(Circle), _, _],
+      [Marked(Circle), _, _],
+    ] =>
+    Circle
+  | [
+      [_, _, Marked(Circle)],
+      [_, _, Marked(Circle)],
+      [_, _, Marked(Circle)],
+    ] =>
+    Circle
+  | [
+      [Marked(Circle), _, _],
+      [_, Marked(Circle), _],
+      [_, _, Marked(Circle)],
+    ] =>
+    Circle
+  | [
+      [_, _, Marked(Circle)],
+      [_, Marked(Circle), _],
+      [Marked(Circle), _, _],
+    ] =>
+    Circle
+  | _ => NoOne
+  };
 
-let whosPlaying = (gameState: GameTypes.gameState) =>
+let gameEnded = board =>
+  ! List.exists(square => square == Empty, List.flatten(board));
+
+let nextPlayer = (gameState: gameState) =>
   switch (gameState) {
   | Playing(Cross) => Playing(Circle)
   | _ => Playing(Cross)
   };
 
-let getWinner = (flattenBoard, coords) =>
-  switch (
-    List.nth(flattenBoard, List.nth(coords, 0)),
-    List.nth(flattenBoard, List.nth(coords, 1)),
-    List.nth(flattenBoard, List.nth(coords, 2)),
-  ) {
-  | (Marked(Cross), Marked(Cross), Marked(Cross)) => Cross
-  | (Marked(Circle), Marked(Circle), Marked(Circle)) => Circle
-  | (_, _, _) => NoOne
+let getNextGameState =
+    (currentBoard: GameTypes.board, currentGameState: GameTypes.gameState) =>
+  switch (getWinner(currentBoard)) {
+  | Cross => Winner(Cross)
+  | Circle => Winner(Circle)
+  | _ => gameEnded(currentBoard) ? Draw : nextPlayer(currentGameState)
   };
 
 let checkGameState =
     (
-      winningRows: winningRows,
-      updatedBoard: GameTypes.board,
+      currentBoard: GameTypes.board,
       oldBoard: GameTypes.board,
-      gameState: GameTypes.gameState,
-    ) =>
-  oldBoard == updatedBoard ?
-    gameState :
-    {
-      let flattenBoard = List.flatten(updatedBoard);
-      let rec check = (rest: winningRows) => {
-        let head = List.hd(rest);
-        let tail = List.tl(rest);
-        let gameEnded = board =>
-          List.for_all(
-            field => field == Marked(Circle) || field == Marked(Cross),
-            board,
-          );
-        let whosPlaying = (gameState: gameState) =>
-          switch (gameState) {
-          | Playing(Cross) => Playing(Circle)
-          | _ => Playing(Cross)
-          };
-        switch (
-          getWinner(flattenBoard, head),
-          gameEnded(flattenBoard),
-          tail,
-        ) {
-        | (Cross, _, _) => Winner(Cross)
-        | (Circle, _, _) => Winner(Circle)
-        | (_, true, []) => Draw
-        | (_, false, []) => whosPlaying(gameState)
-        | _ => check(tail)
-        };
-      };
-      check(winningRows);
-    };
+      currentGameState: GameTypes.gameState,
+    ) => {
+  let boardSameAsBefore = oldBoard == currentBoard;
+  boardSameAsBefore ?
+    currentGameState : getNextGameState(currentBoard, currentGameState);
+};
 
-let checkGameState3x3 = checkGameState(winningCombs);
+let getSquareId = (rowIndex: int, columnIndex: int) =>
+  string_of_int(rowIndex) ++ string_of_int(columnIndex);
 
 let updateBoard = (board: board, gameState: gameState, id) =>
   board
   |> List.mapi((rowIndex: int, row: row) =>
        row
-       |> List.mapi((colIndex: int, value: field) =>
-            string_of_int(rowIndex) ++ string_of_int(colIndex) === id ?
-              switch (gameState, value) {
-              | (_, Marked(_)) => value
-              | (Playing(player), Empty) => Marked(player)
-              | (_, Empty) => Empty
+       |> List.mapi((colIndex: int, square: square) =>
+            square == Empty && getSquareId(rowIndex, colIndex) === id ?
+              switch (gameState) {
+              | Playing(player) => Marked(player)
+              | _ => Empty
               } :
-              value
+              square
           )
      );

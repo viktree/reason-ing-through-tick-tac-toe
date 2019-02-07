@@ -12,7 +12,7 @@ let make = _children => {
       ReasonReact.Update({
         board: updatedBoard,
         gameState:
-          GameLogic.checkGameState3x3(
+          GameLogic.checkGameState(
             updatedBoard,
             state.board,
             state.gameState,

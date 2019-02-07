@@ -1,8 +1,8 @@
 let component = ReasonReact.statelessComponent("Square");
 
-let getClass = (gameState: GameTypes.gameState, field: GameTypes.field) =>
+let getClass = (gameState: GameTypes.gameState, square: GameTypes.square) =>
   switch (gameState) {
-  | Winner(player) => field == Marked(player) ? "winner square" : "square"
+  | Winner(player) => square == Marked(player) ? "winner square" : "square"
   | _ => "square"
   };
 
@@ -12,8 +12,8 @@ let isFinished = (value: GameTypes.gameState) =>
   | _ => false
   };
 
-let toValue = (field: GameTypes.field) =>
-  switch (field) {
+let toValue = (square: GameTypes.square) =>
+  switch (square) {
   | Marked(Cross) => "X"
   | Marked(Circle) => "O"
   | Empty => ""
@@ -21,7 +21,7 @@ let toValue = (field: GameTypes.field) =>
 
 let make =
     (
-      ~value: GameTypes.field,
+      ~value: GameTypes.square,
       ~gameState: GameTypes.gameState,
       ~onMark,
       _children,

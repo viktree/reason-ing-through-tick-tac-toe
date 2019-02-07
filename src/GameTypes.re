@@ -2,11 +2,11 @@ type player =
   | Cross
   | Circle;
 
-type field =
+type square =
   | Empty
   | Marked(player);
 
-type row = list(field);
+type row = list(square);
 type board = list(row);
 
 type gameState =
